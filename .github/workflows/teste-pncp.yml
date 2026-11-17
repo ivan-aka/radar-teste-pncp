@@ -1,0 +1,48 @@
+# Teste descartavel: o PNCP responde aos servidores do GitHub? So le, nao usa chave nenhuma.
+# Roda sozinho ao salvar este arquivo e grava resultado.json no repositorio.
+name: teste-pncp
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Testa o PNCP
+        run: |
+          python3 - <<'PY'
+          import json, time, urllib.request
+          T = {
+            "publicacao": "https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?dataInicial=20261113&dataFinal=20261116&codigoModalidadeContratacao=8&uf=SC&pagina=1&tamanhoPagina=10",
+            "compra": "https://pncp.gov.br/api/consulta/v1/orgaos/83102855000150/compras/2026/126",
+            "arquivos": "https://pncp.gov.br/api/pncp/v1/orgaos/83102855000150/compras/2026/126/arquivos",
+          }
+          def get(u):
+              t = time.time()
+              try:
+                  r = urllib.request.urlopen(urllib.request.Request(u, headers={"accept": "application/json", "user-agent": "radar-teste"}), timeout=60)
+                  b = r.read()
+                  return {"status": r.status, "ms": int((time.time() - t) * 1000), "bytes": len(b)}, b
+              except Exception as e:
+                  return {"erro": str(e)[:200], "ms": int((time.time() - t) * 1000)}, None
+          out, lista = {}, []
+          for nome, u in T.items():
+              out[nome], b = get(u)
+              if nome == "arquivos" and b:
+                  lista = json.loads(b)
+          if lista:
+              out["pdf"], b = get(lista[0]["url"])
+              out["pdf"]["eh_pdf"] = bool(b) and b[:4] == b"%PDF"
+          json.dump(out, open("resultado.json", "w"), indent=1)
+          print(json.dumps(out, indent=1))
+          PY
+      - name: Grava o resultado no repositorio
+        run: |
+          git config user.name "radar-teste"
+          git config user.email "radar-teste@users.noreply.github.com"
+          git add resultado.json
+          git commit -m "resultado do teste" || true
+          git push

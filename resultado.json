@@ -1,0 +1,23 @@
+{
+ "publicacao": {
+  "status": 200,
+  "ms": 3890,
+  "bytes": 23365
+ },
+ "compra": {
+  "status": 200,
+  "ms": 1839,
+  "bytes": 1937
+ },
+ "arquivos": {
+  "status": 200,
+  "ms": 1670,
+  "bytes": 438
+ },
+ "pdf": {
+  "status": 200,
+  "ms": 5926,
+  "bytes": 1291973,
+  "eh_pdf": true
+ }
+}
